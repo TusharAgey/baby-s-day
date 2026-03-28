@@ -1,8 +1,10 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 
-const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1];
-const isGitHubPagesBuild = process.env.GITHUB_ACTIONS === "true";
+const env = loadEnv("production", ".", "");
+
+const repoName = env.GITHUB_REPOSITORY?.split("/")[1];
+const isGitHubPagesBuild = env.GITHUB_ACTIONS === "true";
 
 // https://vitejs.dev/config/
 export default defineConfig({

@@ -51,4 +51,10 @@ export const sampleEvents: BabyEvent[] = [
     duration: 18,
     metadata: { notes: "Breastfeed" },
   },
+  {
+    id: "evt-7",
+    type: "medicine",
+    timestamp: minutesAgo(70),
+    metadata: { name: "Vitamin D", dosage: "1 ml", notes: "Morning dose" },
+  },
 ];

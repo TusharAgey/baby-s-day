@@ -7,6 +7,7 @@ const defaultProfile: BabyProfile = {
   dob: "",
   gender: "",
   notes: "",
+  medicines: [],
 };
 
 export const getBabyProfile = (): BabyProfile => {
@@ -17,4 +18,8 @@ export const getBabyProfile = (): BabyProfile => {
   } catch {
     return defaultProfile;
   }
+};
+
+export const saveBabyProfile = (profile: BabyProfile): void => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
 };

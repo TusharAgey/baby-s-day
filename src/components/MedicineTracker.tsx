@@ -1,141 +1,151 @@
 import { useMemo, useState } from "react";
-import { toLocalInputDate } from "../utils/date";
+import type { BabyEvent } from "../types/events";
+import { getBabyProfile } from "../utils/profileStorage";
 
-interface MedicineItem {
-  id: string;
-  name: string;
-  dosage: string;
-  time: string;
-  notes?: string;
+interface MedicineTrackerProps {
+  events: BabyEvent[];
+  selectedDate: string;
+  onAddMedicine: (event: BabyEvent) => void;
+  compact?: boolean;
 }
 
-const MEDS_KEY = "baby-tracker-medicines";
-const TAKEN_KEY = "baby-tracker-medicines-taken";
-
-const readMedicines = (): MedicineItem[] => {
-  const raw = localStorage.getItem(MEDS_KEY);
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw) as MedicineItem[];
-  } catch {
-    return [];
-  }
-};
-
-const readTaken = (): Record<string, boolean> => {
-  const raw = localStorage.getItem(TAKEN_KEY);
-  if (!raw) return {};
-  try {
-    return JSON.parse(raw) as Record<string, boolean>;
-  } catch {
-    return {};
-  }
-};
-
-export const MedicineTracker = () => {
-  const [medicines, setMedicines] = useState<MedicineItem[]>(() =>
-    readMedicines(),
-  );
-  const [takenMap, setTakenMap] = useState<Record<string, boolean>>(() =>
-    readTaken(),
-  );
+export const MedicineTracker = ({
+  events,
+  selectedDate,
+  onAddMedicine,
+  compact = false,
+}: MedicineTrackerProps) => {
+  const [expanded, setExpanded] = useState(false);
 
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
   const [time, setTime] = useState("08:00");
   const [notes, setNotes] = useState("");
+  const [selectedPresetId, setSelectedPresetId] = useState("");
 
-  const today = toLocalInputDate(new Date());
+  const medicinePresets = getBabyProfile().medicines;
 
-  const persistMeds = (next: MedicineItem[]) => {
-    setMedicines(next);
-    localStorage.setItem(MEDS_KEY, JSON.stringify(next));
-  };
-
-  const toggleTaken = (id: string) => {
-    const key = `${today}:${id}`;
-    const next = { ...takenMap, [key]: !takenMap[key] };
-    setTakenMap(next);
-    localStorage.setItem(TAKEN_KEY, JSON.stringify(next));
-  };
+  const medicines = useMemo(
+    () =>
+      events
+        .filter(
+          (event) =>
+            event.type === "medicine" &&
+            event.timestamp.toDateString() ===
+              new Date(`${selectedDate}T00:00:00`).toDateString(),
+        )
+        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
+    [events, selectedDate],
+  );
 
   const addMedicine = () => {
-    if (!name.trim()) return;
-    const med: MedicineItem = {
+    const selectedPreset = medicinePresets.find(
+      (medicine) => medicine.id === selectedPresetId,
+    );
+    const finalName = selectedPreset?.name ?? name.trim();
+    if (!finalName) return;
+    onAddMedicine({
       id: crypto.randomUUID(),
-      name: name.trim(),
-      dosage: dosage.trim() || "as advised",
-      time,
-      notes: notes.trim() || undefined,
-    };
-    persistMeds([med, ...medicines]);
+      type: "medicine",
+      timestamp: new Date(`${selectedDate}T${time}:00`),
+      metadata: {
+        name: finalName,
+        dosage: (selectedPreset?.dosage ?? dosage.trim()) || "as advised",
+        notes: notes.trim() || selectedPreset?.notes || undefined,
+      },
+    });
     setName("");
     setDosage("");
     setTime("08:00");
     setNotes("");
+    setSelectedPresetId("");
   };
 
-  const completion = useMemo(() => {
-    if (medicines.length === 0) return 0;
-    const count = medicines.filter(
-      (med) => takenMap[`${today}:${med.id}`],
-    ).length;
-    return Math.round((count / medicines.length) * 100);
-  }, [medicines, takenMap, today]);
-
   return (
-    <section className="rounded-3xl border border-white/60 bg-white/50 p-5 shadow-glass backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/60">
+    <section
+      className={`rounded-3xl border border-white/60 bg-white/50 ${compact ? "p-3" : "p-5"} shadow-glass backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/60`}
+    >
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-          Medicines
+          Today's medicines
         </h2>
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          Today: {completion}% done
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Medicine"
-          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-        />
-        <input
-          value={dosage}
-          onChange={(e) => setDosage(e.target.value)}
-          placeholder="Dosage"
-          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-        />
-        <input
-          type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-        />
         <button
           type="button"
-          onClick={addMedicine}
-          className="rounded-xl bg-slate-900 px-3 py-2 text-sm font-medium text-white dark:bg-sky-600"
+          onClick={() => setExpanded((value) => !value)}
+          className="rounded-full bg-white/80 px-3 py-1 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300"
         >
-          Add
+          {expanded ? "Hide" : "Show"}
         </button>
       </div>
-      <input
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        placeholder="Optional notes"
-        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-      />
+
+      {expanded && (
+        <>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
+            <select
+              value={selectedPresetId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedPresetId(id);
+                const preset = medicinePresets.find(
+                  (medicine) => medicine.id === id,
+                );
+                if (preset) {
+                  setName(preset.name);
+                  setDosage(preset.dosage);
+                  setNotes(preset.notes ?? "");
+                }
+              }}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            >
+              <option value="">Pick saved medicine</option>
+              {medicinePresets.map((medicine) => (
+                <option key={medicine.id} value={medicine.id}>
+                  {medicine.name} • {medicine.dosage}
+                </option>
+              ))}
+            </select>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Medicine"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            />
+            <input
+              value={dosage}
+              onChange={(e) => setDosage(e.target.value)}
+              placeholder="Dosage"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            />
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            />
+            <button
+              type="button"
+              onClick={addMedicine}
+              className="rounded-xl bg-slate-900 px-3 py-2 text-sm font-medium text-white dark:bg-sky-600"
+            >
+              Add
+            </button>
+          </div>
+          <input
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Optional notes"
+            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          />
+        </>
+      )}
 
       <div className="mt-3 space-y-2">
         {medicines.length === 0 && (
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            No scheduled medicines yet.
+            No medicines logged for this day.
           </p>
         )}
         {medicines.map((med) => {
-          const done = takenMap[`${today}:${med.id}`];
           return (
             <div
               key={med.id}
@@ -143,20 +153,22 @@ export const MedicineTracker = () => {
             >
               <div>
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-100">
-                  {med.name} • {med.dosage}
+                  {String(med.metadata?.name ?? "Medicine")} •{" "}
+                  {String(med.metadata?.dosage ?? "as advised")}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {med.time}
-                  {med.notes ? ` • ${med.notes}` : ""}
+                  {med.timestamp.toLocaleTimeString([], {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                  {med.metadata?.notes
+                    ? ` • ${String(med.metadata.notes)}`
+                    : ""}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => toggleTaken(med.id)}
-                className={`rounded-lg px-2 py-1 text-xs ${done ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-200"}`}
-              >
-                {done ? "Taken" : "Mark taken"}
-              </button>
+              <span className="rounded-lg bg-violet-100 px-2 py-1 text-xs text-violet-700 dark:bg-violet-900/40 dark:text-violet-200">
+                Logged
+              </span>
             </div>
           );
         })}

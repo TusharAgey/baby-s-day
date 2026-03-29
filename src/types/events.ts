@@ -1,4 +1,4 @@
-export type EventType = "sleep" | "feed" | "stool" | "tummy";
+export type EventType = "sleep" | "feed" | "stool" | "tummy" | "medicine";
 
 export interface BabyEvent {
   id: string;

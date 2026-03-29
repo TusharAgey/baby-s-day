@@ -174,15 +174,13 @@ export const Timeline = ({
                         minute: "2-digit",
                       })}
                     </p>
-                    {!isTiny && (
-                      <button
-                        type="button"
-                        onClick={() => onDelete(event.id)}
-                        className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-600 hover:bg-red-100 dark:bg-red-500/20 dark:text-red-300"
-                      >
-                        Remove
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => onDelete(event.id)}
+                      className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-600 hover:bg-red-100 dark:bg-red-500/20 dark:text-red-300"
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
                 {!isTiny &&

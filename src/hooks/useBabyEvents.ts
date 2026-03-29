@@ -68,5 +68,6 @@ export const useBabyEvents = () => {
     updateEvent,
     undoDelete,
     lastRemovedEvent,
+    setLastRemovedEvent,
   };
 };

@@ -26,6 +26,7 @@ export const HomePage = () => {
     updateEvent,
     undoDelete,
     lastRemovedEvent,
+    setLastRemovedEvent,
   } = useBabyEvents();
   const [activeType, setActiveType] = useState<EventType | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(
@@ -264,6 +265,13 @@ export const HomePage = () => {
             className="ml-3 rounded-full bg-white/20 px-3 py-1 text-xs"
           >
             Undo
+          </button>
+          <button
+            type="button"
+            onClick={() => setLastRemovedEvent(null)}
+            className="ml-3 rounded-full bg-white/20 px-3 py-1 text-xs"
+          >
+            X
           </button>
         </div>
       )}

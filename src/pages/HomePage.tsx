@@ -208,7 +208,6 @@ export const HomePage = () => {
           <section className="flex min-h-0 flex-col gap-4">
             {!compactMode && <BabyProfileCard />}
             <Dashboard
-              onAdd={setActiveType}
               onNaturalLog={handleNaturalLog}
               onStartActivity={handleStartActivity}
               onEndActivity={handleEndActivity}

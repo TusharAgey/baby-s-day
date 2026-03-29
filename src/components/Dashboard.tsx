@@ -8,7 +8,6 @@ interface NaturalLogFeedback {
 }
 
 interface DashboardProps {
-  onAdd: (type: EventType) => void;
   onNaturalLog: (input: string) => NaturalLogFeedback;
   onStartActivity: (type: Extract<EventType, "sleep" | "tummy">) => void;
   onEndActivity: (type: Extract<EventType, "sleep" | "tummy">) => void;
@@ -20,7 +19,6 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({
-  onAdd,
   onNaturalLog,
   onStartActivity,
   onEndActivity,

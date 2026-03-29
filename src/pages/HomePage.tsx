@@ -275,7 +275,7 @@ export const HomePage = () => {
         </div>
       )}
 
-      <div className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 gap-2 rounded-full border border-white/70 bg-white/90 p-2 shadow-glass backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/90 md:hidden">
+      {/* <div className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 gap-2 rounded-full border border-white/70 bg-white/90 p-2 shadow-glass backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/90 md:hidden">
         {(
           [
             ["😴", "sleep"],
@@ -293,7 +293,7 @@ export const HomePage = () => {
             {icon}
           </button>
         ))}
-      </div>
+      </div> */}
 
       <AddEventModal
         type={editingEvent?.type ?? activeType}

@@ -7,6 +7,7 @@ interface AddEventModalProps {
   selectedDate: string;
   onClose: () => void;
   onSubmit: (event: BabyEvent) => void;
+  initialEvent?: BabyEvent | null;
 }
 
 export const AddEventModal = ({
@@ -14,18 +15,29 @@ export const AddEventModal = ({
   selectedDate,
   onClose,
   onSubmit,
+  initialEvent = null,
 }: AddEventModalProps) => {
   const now = new Date();
   const todayKey = toLocalInputDate(now);
   const maxTimeForSelectedDate =
     selectedDate === todayKey ? now.toTimeString().slice(0, 5) : undefined;
 
-  const [duration, setDuration] = useState<string>("15");
-  const [notes, setNotes] = useState<string>("");
-  const [color, setColor] = useState<string>("Brown");
-  const [consistency, setConsistency] = useState<string>("Soft");
+  const [duration, setDuration] = useState<string>(
+    String(initialEvent?.duration ?? "15"),
+  );
+  const [notes, setNotes] = useState<string>(
+    String(initialEvent?.metadata?.notes ?? ""),
+  );
+  const [color, setColor] = useState<string>(
+    String(initialEvent?.metadata?.color ?? "Brown"),
+  );
+  const [consistency, setConsistency] = useState<string>(
+    String(initialEvent?.metadata?.consistency ?? "Soft"),
+  );
   const [time, setTime] = useState<string>(
-    new Date().toTimeString().slice(0, 5),
+    initialEvent
+      ? initialEvent.timestamp.toTimeString().slice(0, 5)
+      : new Date().toTimeString().slice(0, 5),
   );
 
   if (!type) return null;
@@ -44,7 +56,7 @@ export const AddEventModal = ({
     }
 
     onSubmit({
-      id: crypto.randomUUID(),
+      id: initialEvent?.id ?? crypto.randomUUID(),
       type,
       timestamp,
       duration: type === "stool" ? undefined : Number(duration),
@@ -59,7 +71,7 @@ export const AddEventModal = ({
       <div className="w-full max-w-md rounded-3xl border border-white/70 bg-white/90 p-5 shadow-glass dark:border-slate-700 dark:bg-slate-900/95">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            Add {type} event
+            {initialEvent ? "Edit" : "Add"} {type} event
           </h3>
           <button
             type="button"

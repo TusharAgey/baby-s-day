@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { BabyEvent } from "../types/events";
 import { formatDuration } from "../utils/analytics";
 
@@ -5,6 +6,7 @@ interface TimelineProps {
   events: BabyEvent[];
   selectedDate: string;
   onDelete: (id: string) => void;
+  onEdit: (event: BabyEvent) => void;
   compact?: boolean;
   highlightedEventId?: string | null;
 }
@@ -15,6 +17,14 @@ const eventStyles: Record<string, string> = {
   stool: "bg-amber-50 text-amber-700 border-amber-100",
   tummy: "bg-rose-50 text-rose-700 border-rose-100",
   medicine: "bg-violet-50 text-violet-700 border-violet-100",
+};
+
+const eventIcons: Record<string, string> = {
+  sleep: "😴",
+  feed: "🍼",
+  stool: "💩",
+  tummy: "🧸",
+  medicine: "💊",
 };
 
 const formatMetadata = (event: BabyEvent) => {
@@ -28,17 +38,19 @@ export const Timeline = ({
   events,
   selectedDate,
   onDelete,
+  onEdit,
   compact = false,
   highlightedEventId,
 }: TimelineProps) => {
+  const [filter, setFilter] = useState<"all" | BabyEvent["type"]>("all");
   const selectedDay = new Date(`${selectedDate}T00:00:00`).toDateString();
   const filteredEvents = events.filter(
     (event) => event.timestamp.toDateString() === selectedDay,
   );
 
-  const dayEvents = [...filteredEvents].sort(
-    (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
-  );
+  const dayEvents = [...filteredEvents]
+    .filter((event) => filter === "all" || event.type === filter)
+    .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
   const timelineHeight = 960;
   const pxPerMinute = timelineHeight / (24 * 60);
@@ -54,6 +66,20 @@ export const Timeline = ({
       <p className="mb-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {selectedDay}
       </p>
+      <div className="mb-3 flex flex-wrap gap-2">
+        {(["all", "sleep", "feed", "stool", "tummy", "medicine"] as const).map(
+          (item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setFilter(item)}
+              className={`rounded-full px-3 py-1 text-xs transition ${filter === item ? "bg-sky-600 text-white" : "bg-white/80 text-slate-600 dark:bg-slate-800 dark:text-slate-200"}`}
+            >
+              {item}
+            </button>
+          ),
+        )}
+      </div>
 
       {dayEvents.length === 0 && (
         <p className="rounded-2xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
@@ -75,12 +101,39 @@ export const Timeline = ({
             </div>
           ))}
 
+          <div
+            className="pointer-events-none absolute left-0 right-0 border-t-2 border-sky-300/70"
+            style={{
+              top: `${
+                (new Date().getHours() * 60 + new Date().getMinutes()) *
+                pxPerMinute
+              }px`,
+            }}
+          />
+
+          {(["Morning", "Afternoon", "Evening"] as const).map(
+            (segment, index) => {
+              const top = [6, 12, 18][index] * 60 * pxPerMinute;
+              return (
+                <div
+                  key={segment}
+                  className="absolute left-14 text-[10px] uppercase tracking-[0.2em] text-slate-300"
+                  style={{ top: `${top + 6}px` }}
+                >
+                  {segment}
+                </div>
+              );
+            },
+          )}
+
           {dayEvents.map((event) => {
             const startMinutes =
               event.timestamp.getHours() * 60 + event.timestamp.getMinutes();
             const durationMinutes = Math.max(event.duration ?? 5, 5);
             const top = startMinutes * pxPerMinute;
             const height = Math.max(durationMinutes * pxPerMinute, 28);
+            const isTiny = height < 56;
+            const isCompactCard = height < 84;
             return (
               <article
                 key={event.id}
@@ -92,40 +145,65 @@ export const Timeline = ({
                   minHeight: `${height}px`,
                 }}
               >
-                <div className="flex items-center justify-between gap-2">
+                <div
+                  className={`flex ${isTiny ? "items-center" : "items-start"} justify-between gap-2 overflow-hidden`}
+                >
                   <span
-                    className={`rounded-full border px-2 py-0.5 text-xs font-medium ${eventStyles[event.type]}`}
+                    className={`inline-flex max-w-[58%] items-center gap-1 rounded-full border ${isTiny ? "px-1.5 py-0 text-[10px]" : "px-2 py-0.5 text-xs"} font-medium ${eventStyles[event.type]}`}
                   >
-                    {event.type}
+                    <span>{eventIcons[event.type]}</span>
+                    <span className="truncate">{event.type}</span>
                   </span>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <div
+                    className={`flex ${isTiny ? "items-center gap-1" : "items-center gap-2"} shrink-0`}
+                  >
+                    {!isTiny && (
+                      <button
+                        type="button"
+                        onClick={() => onEdit(event)}
+                        className="rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-600 hover:bg-sky-100 dark:bg-sky-500/20 dark:text-sky-200"
+                      >
+                        Edit
+                      </button>
+                    )}
+                    <p
+                      className={`${isTiny ? "text-[10px]" : "text-xs"} text-slate-500 dark:text-slate-400`}
+                    >
                       {event.timestamp.toLocaleTimeString([], {
                         hour: "numeric",
                         minute: "2-digit",
                       })}
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => onDelete(event.id)}
-                      className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-600 hover:bg-red-100 dark:bg-red-500/20 dark:text-red-300"
-                    >
-                      Remove
-                    </button>
+                    {!isTiny && (
+                      <button
+                        type="button"
+                        onClick={() => onDelete(event.id)}
+                        className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-600 hover:bg-red-100 dark:bg-red-500/20 dark:text-red-300"
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
                 </div>
-                {event.type !== "stool" && event.type !== "medicine" && (
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                    Duration:{" "}
-                    <span className="font-medium">
-                      {formatDuration(event.duration)}
-                    </span>
-                  </p>
-                )}
-                {formatMetadata(event) && (
-                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                {!isTiny &&
+                  event.type !== "stool" &&
+                  event.type !== "medicine" && (
+                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                      Duration:{" "}
+                      <span className="font-medium">
+                        {formatDuration(event.duration)}
+                      </span>
+                    </p>
+                  )}
+                {!isCompactCard && formatMetadata(event) && (
+                  <p className="mt-1 line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400">
                     {formatMetadata(event)}
                   </p>
+                )}
+                {!isCompactCard && (
+                  <div className="mt-2 text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                    {height >= 80 ? "Day story entry" : "Quick log"}
+                  </div>
                 )}
               </article>
             );

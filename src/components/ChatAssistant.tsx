@@ -28,7 +28,7 @@ export const ChatAssistant = ({
 
   return (
     <aside
-      className={`rounded-3xl border border-white/60 bg-white/50 ${compact ? "p-3" : "p-5"} shadow-glass backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/60 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-hidden`}
+      className={`self-start rounded-3xl border border-white/60 bg-white/50 ${compact ? "p-3" : "p-5"} shadow-glass backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/60 lg:sticky lg:top-2 ${compact ? "lg:max-h-[300px]" : "lg:max-h-[calc(100vh-1rem)]"} lg:overflow-hidden`}
     >
       <div className="mb-2 flex w-full items-center justify-between">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
@@ -39,11 +39,15 @@ export const ChatAssistant = ({
         </span>
       </div>
 
-      <div className="space-y-2 lg:max-h-[52vh] lg:overflow-y-auto lg:pr-1">
+      <div
+        className={`space-y-2 ${compact ? "lg:max-h-[250px]" : "lg:max-h-[52vh]"} lg:overflow-y-auto lg:pr-1`}
+      >
         <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {recommendation.title}
         </p>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div
+          className={`grid gap-2 ${compact ? "grid-cols-1" : "sm:grid-cols-3"}`}
+        >
           {recommendation.metrics.map((metric) => (
             <div
               key={metric.label}
@@ -58,7 +62,10 @@ export const ChatAssistant = ({
             </div>
           ))}
         </div>
-        {recommendation.messages.map((bullet) => (
+        {(compact
+          ? recommendation.messages.slice(0, 2)
+          : recommendation.messages
+        ).map((bullet) => (
           <div
             key={bullet}
             className={`rounded-2xl border border-sky-100 bg-sky-50/80 ${compact ? "p-2" : "p-3"} text-sm text-slate-700 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-slate-200`}

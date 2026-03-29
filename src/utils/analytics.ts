@@ -101,3 +101,21 @@ export const formatDuration = (minutes?: number): string => {
   if (!minutes) return "—";
   return toHoursAndMinutes(minutes);
 };
+
+export const calculateDailyTypeCounts = (
+  events: BabyEvent[],
+  type: BabyEvent["type"],
+  days = 3,
+) =>
+  Array.from({ length: days }, (_, index) => {
+    const target = new Date();
+    target.setDate(target.getDate() - (days - index - 1));
+    const dayKey = target.toDateString();
+    return {
+      label: target.toLocaleDateString([], { weekday: "short" }),
+      count: events.filter(
+        (event) =>
+          event.type === type && event.timestamp.toDateString() === dayKey,
+      ).length,
+    };
+  });
